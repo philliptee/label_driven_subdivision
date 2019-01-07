@@ -22,8 +22,7 @@ set(IMGUI_HEADERS
         "include/imgui/imstb_textedit.h"
         "include/imgui/imstb_truetype.h")
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GLFW REQUIRED glfw3)
+find_package(glfw3 REQUIRED)
 set(COMMON_LIBS sb7 ${GLFW_LIBRARIES} GL rt dl OpenMeshCore OpenMeshTools)
 
 link_libraries(stdc++fs)
