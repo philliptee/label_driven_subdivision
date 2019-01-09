@@ -8,9 +8,9 @@ Yong, J.-H., & Cheng, F. (Frank). (2005).](http://cs.engr.uky.edu/~cheng/PUBL/Pa
 
 I started with parts from the [OpenGL Superbible 7 Edition code](https://github.com/openglsuperbible/sb7code).
 
-I used OpenGL (used a glsl v4.60 feature),
-[GLFW](https://www.glfw.org/) (assume binaries are installed)
+I used OpenGL (used a glsl v4.60 feature, must be installed),
+[GLFW](https://www.glfw.org/) (must be installed)
 [dear imgui ](https://github.com/ocornut/imgui) (source included),
- and [OpenMesh libraries](http://www.openmesh.org/) (source included).
+ and [OpenMesh libraries](http://www.openmesh.org/) (must be installed).
 
 Write-up link here. 
