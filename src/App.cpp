@@ -137,7 +137,7 @@ protected:
             object.update_mesh_properties();
         }
 
-        ImGui::SliderFloat("Maximum Angle", &object.angle_limit_degrees, 0.0f, 90.0f);
+        ImGui::SliderFloat("Angle (Lower Bound)", &object.angle_limit_degrees, 0.0f, 90.0f);
 
         if (ImGui::Button("Remove Illegal Vertices"))
             object.solve_mesh_labels();
@@ -188,8 +188,8 @@ protected:
 
 //         Setup Style
         ImGui::StyleColorsDark();
-        ImGui::GetStyle().ScaleAllSizes(1.0);
-        ImGui::GetIO().FontGlobalScale = 1.0;
+        ImGui::GetStyle().ScaleAllSizes(2.0);
+        ImGui::GetIO().FontGlobalScale = 2.0;
 
         load_shaders();
 
