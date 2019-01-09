@@ -188,8 +188,8 @@ protected:
 
 //         Setup Style
         ImGui::StyleColorsDark();
-        ImGui::GetStyle().ScaleAllSizes(2.0);
-        ImGui::GetIO().FontGlobalScale = 2.0;
+        ImGui::GetStyle().ScaleAllSizes(1.0);
+        ImGui::GetIO().FontGlobalScale = 1.0;
 
         load_shaders();
 
