@@ -12,5 +12,7 @@ I used OpenGL (used a glsl v4.60 feature, must be installed),
 [GLFW](https://www.glfw.org/) (must be installed)
 [dear imgui ](https://github.com/ocornut/imgui) (source included),
  and [OpenMesh libraries](http://www.openmesh.org/) (must be installed).
+ 
+Also this was developed on the ubuntu linux distribution so... no windows support.
 
-Write-up link here. 
+Write-up link to come.
