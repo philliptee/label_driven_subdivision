@@ -11,37 +11,36 @@ namespace LabelSubdivision {
     OpenMesh::MPropHandleT<std::set<VertexHandle>> positive_label_set;
     OpenMesh::MPropHandleT<bool> quad_mesh;
 
-    OpenMesh::VPropHandleT<Point> vp_pos_;
-    OpenMesh::VPropHandleT<bool> vp_update_;
+    OpenMesh::VPropHandleT<Point> new_pos_;
+    OpenMesh::VPropHandleT<bool> v_update_;
     OpenMesh::VPropHandleT<int> potential_new_illegal_count_;
     OpenMesh::VPropHandleT<int> illegal_valence_;
     OpenMesh::VPropHandleT<int> vertex_label;
-
-    OpenMesh::EPropHandleT<Point> ep_pos_;
     std::vector<VertexHandle> zero_v;
-    OpenMesh::FPropHandleT<Point> fp_pos_;
+
+    OpenMesh::EPropHandleT<Point> mid_pos_;
+    OpenMesh::FPropHandleT<Point> centroid_;
     OpenMesh::FPropHandleT<VertexHandle> pos_vert_id_;
     OpenMesh::FPropHandleT<bool> face_update_;
 
 //-----------------------------------------------------------------------------
 
     void prepare(MyMesh &_m, const bool _update_points) {
-        _m.add_property(vp_pos_);
-        _m.add_property(ep_pos_);
-        _m.add_property(fp_pos_);
+        _m.add_property(new_pos_);
+        _m.add_property(mid_pos_);
+        _m.add_property(centroid_);
 
         if (_update_points) {
             _m.add_property(pos_vert_id_);
             _m.add_property(face_update_);
-            _m.add_property(vp_update_);
+            _m.add_property(v_update_);
         }
     }
 
     void set_vertex_updates(MyMesh &_m) {
-        _m.property(positive_label_set).clear();
 
         for (auto v_itr = _m.vertices_begin(); v_itr != _m.vertices_end(); ++v_itr)
-            _m.property(vp_update_, *v_itr) = false;
+            _m.property(v_update_, *v_itr) = false;
 
         for (auto f_itr = _m.faces_begin(); f_itr != _m.faces_end(); ++f_itr) {
             _m.property(face_update_, *f_itr) = false;
@@ -49,7 +48,6 @@ namespace LabelSubdivision {
             std::vector<HalfedgeHandle> half_edge_to_pos_label;
             for (auto fh_it = _m.fh_ccwiter(*f_itr); fh_it.is_valid(); ++fh_it) {
                 if (_m.property(vertex_label, _m.to_vertex_handle(*fh_it)) > 0) {
-                    _m.property(positive_label_set).insert(_m.to_vertex_handle(*fh_it));
                     _m.property(pos_vert_id_, *f_itr) = _m.to_vertex_handle(*fh_it);
                     pos_label_count += 1;
                     half_edge_to_pos_label.push_back(*fh_it);
@@ -58,16 +56,16 @@ namespace LabelSubdivision {
             }
             if (half_edge_to_pos_label.size() >= 2) {
                 for (auto fh_it = _m.fh_ccwiter(*f_itr); fh_it.is_valid(); ++fh_it) {
-                    _m.property(vp_update_, _m.from_vertex_handle(*fh_it)) = true;
+                    _m.property(v_update_, _m.from_vertex_handle(*fh_it)) = true;
                 }
             } else if (half_edge_to_pos_label.size() == 1) {
                 auto heh = half_edge_to_pos_label[0];
                 for (int i = 0; i < 4; ++i, heh = _m.next_halfedge_handle(heh)) {
                     if (i == 2) {
-                        _m.property(vp_update_, _m.to_vertex_handle(heh)) =
-                                false | _m.property(vp_update_, _m.to_vertex_handle(heh));
+                        _m.property(v_update_, _m.to_vertex_handle(heh)) =
+                                false | _m.property(v_update_, _m.to_vertex_handle(heh));
                     } else {
-                        _m.property(vp_update_, _m.to_vertex_handle(heh)) = true;
+                        _m.property(v_update_, _m.to_vertex_handle(heh)) = true;
                     }
                 }
             }
@@ -77,12 +75,12 @@ namespace LabelSubdivision {
 //-----------------------------------------------------------------------------
 
     void cleanup(MyMesh &_m, const bool _update_points) {
-        _m.remove_property(vp_pos_);
-        _m.remove_property(ep_pos_);
-        _m.remove_property(fp_pos_);
+        _m.remove_property(new_pos_);
+        _m.remove_property(mid_pos_);
+        _m.remove_property(centroid_);
 
         if (_update_points) {
-            _m.remove_property(vp_update_);
+            _m.remove_property(v_update_);
             _m.remove_property(pos_vert_id_);
             _m.remove_property(face_update_);
             _m.property(face_depths).clear();
@@ -120,7 +118,7 @@ namespace LabelSubdivision {
             for (auto f_itr = _m.faces_begin(); f_itr != f_end; ++f_itr) {
                 Point centroid;
                 _m.calc_face_centroid(*f_itr, centroid);
-                _m.property(fp_pos_, *f_itr) = centroid;
+                _m.property(centroid_, *f_itr) = centroid;
             }
 
             EdgeIter e_end = _m.edges_end();
@@ -141,8 +139,8 @@ namespace LabelSubdivision {
                 if (_m.property(vertex_label, *v_itr) == 0) {
                     _m.property(positive_label_set).erase(*v_itr);
                 }
-                if (_m.property(vp_update_, *v_itr) == true) {
-                    _m.set_point(*v_itr, _m.property(vp_pos_, *v_itr));
+                if (_m.property(v_update_, *v_itr) == true) {
+                    _m.set_point(*v_itr, _m.property(new_pos_, *v_itr));
                 }
             }
 
@@ -191,7 +189,7 @@ namespace LabelSubdivision {
         int valence = _m.valence(_fh) / 2;
 
         // new mesh vertex from face centroid
-        VertexHandle vh = _m.add_vertex(_m.property(fp_pos_, _fh));
+        VertexHandle vh = _m.add_vertex(_m.property(centroid_, _fh));
 
 
         HalfedgeHandle hend = _m.halfedge_handle(_fh);
@@ -284,7 +282,7 @@ namespace LabelSubdivision {
 
         // don't split if labels are zero
         if (_update_points) {
-            if ((_m.property(vp_update_, vh1) == false) || (_m.property(vp_update_, vh2) == false)) {
+            if ((_m.property(v_update_, vh1) == false) || (_m.property(v_update_, vh2) == false)) {
                 return;
             } else {
                 minimum = std::min(_m.property(vertex_label, vh1), _m.property(vertex_label, vh2));
@@ -293,7 +291,7 @@ namespace LabelSubdivision {
 
         // new vertex
         vh = _m.new_vertex(zero);
-        _m.set_point(vh, _m.property(ep_pos_, _eh));
+        _m.set_point(vh, _m.property(mid_pos_, _eh));
 
         if (_update_points) {
             _m.property(vertex_label, vh) = minimum;
@@ -345,8 +343,7 @@ namespace LabelSubdivision {
 
 //-----------------------------------------------------------------------------
 
-    void
-    compute_midpoint(MyMesh &_m, const EdgeHandle &_eh,
+    void compute_midpoint(MyMesh &_m, const EdgeHandle &_eh,
                      const bool _update_points) {
         HalfedgeHandle heh, opp_heh;
 
@@ -366,18 +363,17 @@ namespace LabelSubdivision {
             // inner edge: add neighbouring Vertices to sum
             // this yields the [1/16 1/16; 3/8 3/8; 1/16 1/16] mask
         else {
-            pos += _m.property(fp_pos_, _m.face_handle(heh));
-            pos += _m.property(fp_pos_, _m.face_handle(opp_heh));
+            pos += _m.property(centroid_, _m.face_handle(heh));
+            pos += _m.property(centroid_, _m.face_handle(opp_heh));
             pos *= 0.25;
         }
 
-        _m.property(ep_pos_, _eh) = pos;
+        _m.property(mid_pos_, _eh) = pos;
     }
 
 //-----------------------------------------------------------------------------
 
-    void
-    update_vertex(MyMesh &_m, const VertexHandle &_vh) {
+    void update_vertex(MyMesh &_m, const VertexHandle &_vh) {
         Point pos(0.0, 0.0, 0.0);
 
         if (_m.is_boundary(_vh)) {
@@ -386,7 +382,7 @@ namespace LabelSubdivision {
             VertexEdgeIter ve_itr;
             for (ve_itr = _m.ve_iter(_vh); ve_itr.is_valid(); ++ve_itr)
                 if (_m.is_boundary(*ve_itr))
-                    pos += _m.property(ep_pos_, *ve_itr);
+                    pos += _m.property(mid_pos_, *ve_itr);
             pos /= 3.0;
         } else // inner vertex
         {
@@ -403,7 +399,7 @@ namespace LabelSubdivision {
 
             for (vf_itr = _m.vf_iter(_vh); vf_itr.is_valid(); ++vf_itr) //, neigboring_faces += 1.0 )
             {
-                Q += _m.property(fp_pos_, *vf_itr);
+                Q += _m.property(centroid_, *vf_itr);
             }
 
             Q /= valence * valence;//neigboring_faces;
@@ -411,7 +407,7 @@ namespace LabelSubdivision {
             pos += _m.point(_vh) * (valence - 2.0) / valence + Q;
         }
 
-        _m.property(vp_pos_, _vh) = pos;
+        _m.property(new_pos_, _vh) = pos;
     }
 
 //-----------------------------------------------------------------------------
