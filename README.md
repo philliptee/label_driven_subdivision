@@ -15,4 +15,4 @@ I used OpenGL (used a glsl v4.60 feature, must be installed),
  
 Also this was developed on the ubuntu linux distribution so... no windows support.
 
-Write-up link to come.
+An web version of my project report is [here](https://philsresearch.space/2019/01/label-driven-subdivision.html).
